@@ -14,13 +14,8 @@ int seg,min,hr;
 
 void main(){
     int i=0;
-    for(i=0;i<63;i++){
-        rtc_get_time(hr,min,seg);
-        printf("%d\n\r",seg);
-        delay_ms(100);
-    }
     rtc_get_time(hr,min,seg);
-    printf("funcion%d\n\r",seg);
+    printf("segundos:%d minutos:%d horas:%d\n\r",seg,min,hr);
 }
 
 int BCDaBIN(BYTE bcd){
