@@ -8,13 +8,21 @@
 #use standard_io(c)
 
 void main(){
-    i2c_start();
-    i2c_read(SLAVE_READ_ADDR);
-    int segundos=0;
-    segundos=i2c_read();
+    int i=0;
     while(TRUE){
-        printf("%d\n\r",segundos);
+        i2c_start();
+        i2c_write(SLAVE_READ_ADDR);
+        int segundos=0,minutos=0,hora=0;
+        segundos=i2c_read(1);
+        minutos=i2c_read(1);
+        hora=i2c_read(0);
+        printf("SEG:%d\n\rMIN:%d\n\rHORA:%d\n\r",segundos,minutos,hora);
         printf("algo");
         getch();
+        i++;
+        if(i>5){
+            FALSE;
+        }
     }
+    i2c_stop();
 }
