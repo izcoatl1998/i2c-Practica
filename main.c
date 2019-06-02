@@ -8,7 +8,7 @@
 #use standard_io(c)
 
 int convertidorBcdABin(BYTE bcd);
-void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& yaer);
+void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& year);
 void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos);
 
 int segundos,minutos,horas,dia,mes,year;
