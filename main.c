@@ -10,16 +10,44 @@
 int convertidorBcdABin(BYTE bcd);
 void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& year);
 void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos);
+void limipiarVariables();
 
-int segundos,minutos,horas,dia,mes,year;
+int segundos,minutos,horas,dia,mes,year,contadorTimer=0;
 
-void main(){
-    obtenerTiempo(horas,minutos,segundos);
-    printf("horas:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
-    obtenerFecha(dia,mes,year);
-    printf("dia:%d mes:%d year:%d",dia,mes,year);
+#int_timer0
+void isr_timer0(){
+    contadorTimer++;
+    set_timer0(15536);
 }
 
+void main(){
+    setup_oscillator(OSC_16MHZ);
+    setup_adc_ports(NO_ANALOGS);
+    setup_timer_0(RTCC_INTERNAL|RTCC_DIV_8);
+    set_timer0(15536);
+    enable_interrupts(INT_TIMER0);
+    enable_interrupts(GLOBAL);
+    obtenerFecha(dia,mes,year);
+    printf("dia:%d mes:%d year:%d\n\r",dia,mes,year);
+    obtenerTiempo(horas,minutos,segundos);
+    printf("horas:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
+    while(TRUE){
+        if(contadorTimer==10){
+            obtenerTiempo(horas,minutos,segundos);
+            printf("horas:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
+            limipiarVariables();
+        }
+    }
+}
+void limipiarVariables(){
+    contadorTimer=0;
+    segundos=0;
+    minutos=0;
+    horas=0;
+    dia=0;
+    mes=0;
+    year=0;
+}
 int convertidorBcdABin(BYTE bcd){
     return (((bcd)&15) + ((bcd)>>4)*10);
 }
@@ -32,8 +60,9 @@ void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& year){
     dia = convertidorBcdABin(i2c_read()&0x1f); //Leer y asignar los 5 bit del dia
     mes = convertidorBcdABin(i2c_read()&0xf); //4 bits de los meses
     year = convertidorBcdABin(i2c_read(0)&0xff); //8 bits de los años
+    i2c_stop();
 }
-void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos){
+void obtenerTiempo(BYTE& horas, BYTE& minutos, BYTE& segundos){
     i2c_start(); //Iniciar comunicación
     i2c_write(0xD0); //Direccion de escritura
     i2c_write(0x00); //Puntero de la primera dirección
