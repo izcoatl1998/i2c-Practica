@@ -10,14 +10,24 @@
 int convertidorBcdABin(BYTE bcd);
 void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& year);
 void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos);
-void limipiarVariables();
+void limpiarVariables();
 
-int segundos,minutos,horas,dia,mes,year,contadorTimer=0;
+int segundos,minutos,horas,dia,mes,year,contadorTimer=0,salirOpc=0,contadorCiclo=0;
+char opcion="";
 
 #int_timer0
 void isr_timer0(){
-    contadorTimer++;
+    if(opcion=='1'){
+        contadorTimer++;
+    }
     set_timer0(15536);
+}
+#int_RDA
+void isr_serial(){
+    opcion=getch();
+    if(opcion=='1' || opcion=='2'){
+        printf("%c",opcion);
+    }
 }
 
 void main(){
@@ -26,20 +36,31 @@ void main(){
     setup_timer_0(RTCC_INTERNAL|RTCC_DIV_8);
     set_timer0(15536);
     enable_interrupts(INT_TIMER0);
+    enable_interrupts(INT_RDA);
     enable_interrupts(GLOBAL);
     obtenerFecha(dia,mes,year);
-    printf("dia:%d mes:%d year:%d\n\r",dia,mes,year);
-    obtenerTiempo(horas,minutos,segundos);
-    printf("horas:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
+    printf("Elija opcion:\n\r[1]Leer datos\n\r[2]Escribir datos:");
     while(TRUE){
-        if(contadorTimer==10){
-            obtenerTiempo(horas,minutos,segundos);
-            printf("horas:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
-            limipiarVariables();
+        if(opcion=='0'){
+            printf("\n\rElija opcion:\n\r[1]Leer datos\n\r[2]Escribir datos:");
+            opcion='3';
+        }
+        if(opcion=='1'){
+            if(contadorTimer==10){
+                obtenerTiempo(horas,minutos,segundos);
+                printf("\n\rhoras:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
+                contadorCiclo++;
+                if(contadorCiclo==5){
+                    printf("[0]Menu [1]Continuar");
+                    opcion='x';
+                    contadorCiclo=0;
+                }
+                contadorTimer=0;
+            }
         }
     }
 }
-void limipiarVariables(){
+void limpiarVariables(){
     contadorTimer=0;
     segundos=0;
     minutos=0;
@@ -47,6 +68,7 @@ void limipiarVariables(){
     dia=0;
     mes=0;
     year=0;
+    contadorCiclo=0;
 }
 int convertidorBcdABin(BYTE bcd){
     return (((bcd)&15) + ((bcd)>>4)*10);
