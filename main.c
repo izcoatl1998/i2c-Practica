@@ -7,28 +7,28 @@
 #define SLAVE_READ_ADDR 0xD1
 #use standard_io(c)
 
-int BCDaBIN(BYTE bcd);
-void rtc_get_time(BYTE& hr, BYTE& min, BYTE& sec);
+int convertidorBcdABin(BYTE bcd);
+void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos);
 
 int segundos,minutos,horas;
 
 void main(){
     int i=0;
-    rtc_get_time(horas,minutos,segundos);
+    obtenerTiempo(horas,minutos,segundos);
     printf("horas:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
 }
 
 int convertidorBcdABin(BYTE bcd){
     return (((bcd)&15) + ((bcd)>>4)*10);
 }
-void rtc_get_time(BYTE& hora, BYTE& minutos, BYTE& segundos) {
-    i2c_start(); //Escritura
-    i2c_write(0xD0); //Codigo de escritura
+void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos){
+    i2c_start(); //Iniciar comunicación
+    i2c_write(0xD0); //Direccion de escritura
     i2c_write(0x00); //Puntero de la primera dirección
     i2c_start(); //Lectura
-    i2c_write(0xD1); //Codigo de lectura
-    segundos = convertidorBcdABin(i2c_read()&0x7f); //Lectura de los 7 bit de los segundos
-    minutos = convertidorBcdABin(i2c_read()&0x7f); //Lectura de los 7 bit de los minutos
-    horas = convertidorBcdABin(i2c_read(0)&0x3f); //Lectura de los 6 bit de las horas
+    i2c_write(0xD1); //Direccion de lectura
+    segundos = convertidorBcdABin(i2c_read()&0x7f); //Leer y asignar los 7 bit de los segundos
+    minutos = convertidorBcdABin(i2c_read()&0x7f); //7 bit de los minutos
+    horas = convertidorBcdABin(i2c_read(0)&0x3f); //6 bit de las horas
     i2c_stop(); //Finaliza comunicación
 }
