@@ -7,14 +7,27 @@
 #define SLAVE_READ_ADDR 0xD1
 #use standard_io(c)
 
+int convertidorBcdABin(BYTE bcd);
+void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& yaer);
+
+int dia,mes,year;
+
 void main(){
-    i2c_start();
-    i2c_read(SLAVE_READ_ADDR);
-    int segundos=0;
-    segundos=i2c_read();
-    while(TRUE){
-        printf("%d\n\r",segundos);
-        printf("algo");
-        getch();
-    }
+    obtenerFecha(dia,mes,year);
+    printf("dia:%d mes:%d year:%d",dia,mes,year);
+}
+
+int convertidorBcdABin(BYTE bcd){
+    return (((bcd)&15) + ((bcd)>>4)*10);
+}
+void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& year){
+    i2c_start(); //Iniciar comunicación
+    i2c_write(0xD0); //Direccion de escritura
+    i2c_write(0x04); //Puntero de la cuarta dirección para la fecha
+    i2c_start(); //Lectura
+    i2c_write(0xD1); //Direccion de lectura
+    dia = convertidorBcdABin(i2c_read()&0x1f); //Leer y asignar los 5 bit del dia
+    mes = convertidorBcdABin(i2c_read()&0xf); //4 bits de los meses
+    year = convertidorBcdABin(i2c_read(0)&0xff); //8 bits de los años
+    i2c_stop(); //Finaliza comunicación
 }
