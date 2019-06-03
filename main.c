@@ -3,17 +3,20 @@
 #use delay(crystal=16000000)
 #use rs232(baud=9600,parity=N,xmit=PIN_C6,rcv=PIN_C7,bits=8)
 #use i2c(MASTER,FAST,SDA=PIN_C4,SCL=PIN_C3)
-#define SLAVE_WRITE_ADDR 0xD0
-#define SLAVE_READ_ADDR 0xD1
+
 #use standard_io(c)
 
+int convertirNumero(char numero[]);
 int convertidorBcdABin(BYTE bcd);
+int convertidorDecABcd(BYTE bcd);
 void obtenerFecha(BYTE& dia, BYTE& mes, BYTE& year);
 void obtenerTiempo(BYTE& hora, BYTE& minutos, BYTE& segundos);
+void escribirFecha(int dia, int mes, int year);
 void limpiarVariables();
 
-int segundos,minutos,horas,dia,mes,year,contadorTimer=0,salirOpc=0,contadorCiclo=0;
-char opcion="";
+int segundos,minutos,horas,dia,mes,year,contadorTimer=0,contadorCiclo=0;
+int cambiarDia=0,cambiarMes=0,cambiarYear=0,indice=0;
+char opcion="",numero[2];
 
 #int_timer0
 void isr_timer0(){
@@ -25,8 +28,22 @@ void isr_timer0(){
 #int_RDA
 void isr_serial(){
     opcion=getch();
-    if(opcion=='1' || opcion=='2'){
-        printf("%c",opcion);
+    printf("%c",opcion);
+    if(opcion=='2'){
+        printf("\n\rIngrese el dia de la forma [0][1] o [3][1]:");
+        numero[indice]=getch();
+        numero[indice+1]=getch();
+        cambiarDia=convertirNumero(numero);
+        printf("\n\rIngrese el mes de la forma [0][1] o [1][2]:");
+        numero[indice]=getch();
+        numero[indice+1]=getch();
+        cambiarMes=convertirNumero(numero);
+        printf("\n\rIngrese el year de la forma [0][1] o [1][9]:");
+        numero[indice]=getch();
+        numero[indice+1]=getch();
+        cambiarYear=convertirNumero(numero);
+        escribirFecha(cambiarDia,cambiarMes,cambiarYear);
+        opcion='0';
     }
 }
 
@@ -39,11 +56,12 @@ void main(){
     enable_interrupts(INT_RDA);
     enable_interrupts(GLOBAL);
     obtenerFecha(dia,mes,year);
+    printf("Dia: %d Mes:%d Year:%d\n\r",dia,mes,year);
     printf("Elija opcion:\n\r[1]Leer datos\n\r[2]Escribir datos:");
     while(TRUE){
         if(opcion=='0'){
             printf("\n\rElija opcion:\n\r[1]Leer datos\n\r[2]Escribir datos:");
-            opcion='3';
+            opcion='x';
         }
         if(opcion=='1'){
             if(contadorTimer==10){
@@ -51,8 +69,8 @@ void main(){
                 printf("\n\rhoras:%d minutos:%d segundos:%d\n\r",horas,minutos,segundos);
                 contadorCiclo++;
                 if(contadorCiclo==5){
-                    printf("[0]Menu [1]Continuar");
                     opcion='x';
+                    printf("[0]Menu [1]Continuar");
                     contadorCiclo=0;
                 }
                 contadorTimer=0;
@@ -69,6 +87,12 @@ void limpiarVariables(){
     mes=0;
     year=0;
     contadorCiclo=0;
+    numero[0]='0';
+    numero[1]='0';
+    cambiarDia=0;
+}
+int convertidorDecABcd(BYTE bcd){
+    return (((bcd/10) << 4) | (bcd % 10));
 }
 int convertidorBcdABin(BYTE bcd){
     return (((bcd)&15) + ((bcd)>>4)*10);
@@ -94,4 +118,20 @@ void obtenerTiempo(BYTE& horas, BYTE& minutos, BYTE& segundos){
     minutos = convertidorBcdABin(i2c_read()&0x7f); //7 bit de los minutos
     horas = convertidorBcdABin(i2c_read(0)&0x3f); //6 bit de las horas
     i2c_stop(); //Finaliza comunicación
+}
+void escribirFecha(int dia, int mes, int year){
+    i2c_start();
+    i2c_write(0xD0);
+    i2c_write(0x04);
+    i2c_write(convertidorDecABcd(dia));
+    i2c_write(convertidorDecABcd(mes));
+    i2c_write(convertidorDecABcd(year));
+    i2c_stop();
+}
+int convertirNumero(char cadena[]){
+    int indice=0,numero=0;
+    for(indice=0;indice<2;indice++){
+        numero=(numero*10)+(cadena[indice]-'0');
+    }
+    return numero;
 }
